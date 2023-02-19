@@ -7,16 +7,11 @@ edition = "2021"
 
 [dependencies]
 packed_struct = { version = "0.10", default-features = false }
-#cortex-m-rtic = "1.1"
-#cortex-m = "0.7"
-cortex-m = "0.6"
-#cortex-m-rt = "0.7"
-cortex-m-rt = "0.6"
-#stm32f0xx-hal = { version = "0.18", features = ["stm32f072", "rt"]}
-stm32f0xx-hal = { version = "0.15.2", features = ["rt", "stm32f072"] }
+cortex-m = "0.7"
+cortex-m-rt = "0.7"
+stm32f0xx-hal = { version = "0.18", features = ["stm32f072", "rt", "stm32-usbd"]}
 embedded-hal = { version = "0.2", features = ["unproven"] }
 panic-halt = "0.2"
 usbd-human-interface-device = "0.3"
-#stm32-usbd = "0.6"
-stm32-usbd = { version = "0.4.0", features = ["stm32f072xx"] }
+stm32-usbd = "0.6"
 usb-device= "0.2"

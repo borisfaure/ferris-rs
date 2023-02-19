@@ -7,7 +7,7 @@ extern crate panic_halt;
 use cortex_m_rt::entry;
 
 use stm32_usbd::UsbBus;
-use stm32f0xx_hal::{prelude::*, stm32};
+use stm32f0xx_hal::{pac, prelude::*, usb};
 use usb_device::prelude::*;
 
 use usbd_human_interface_device::device::keyboard::NKROBootKeyboardInterface;
@@ -16,7 +16,7 @@ use usbd_human_interface_device::prelude::UsbHidClassBuilder;
 
 #[entry]
 fn main() -> ! {
-    let mut dp = stm32::Peripherals::take().unwrap();
+    let mut dp = pac::Peripherals::take().unwrap();
 
     // Reset and clock control
     let mut rcc = dp
@@ -29,10 +29,12 @@ fn main() -> ! {
         .freeze(&mut dp.FLASH);
 
     let gpioa = dp.GPIOA.split(&mut rcc);
-    let usb_dm = gpioa.pa11;
-    let usb_dp = gpioa.pa12;
 
-    let usb_bus = UsbBus::new(dp.USB, (usb_dm, usb_dp));
+    let usb_bus = UsbBus::new(usb::Peripheral {
+        usb: dp.USB,
+        pin_dm: gpioa.pa11,
+        pin_dp: gpioa.pa12,
+    });
 
     let mut usb_dev = UsbDeviceBuilder::new(&usb_bus, UsbVidPid(0x1209, 0x0001))
         .manufacturer("usbd-human-interface-device")
