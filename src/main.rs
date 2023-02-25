@@ -2,72 +2,227 @@
 #![no_main]
 
 // Some panic handler needs to be included. This one halts the processor on panic.
-extern crate panic_halt;
+use panic_halt as _;
 
-use cortex_m_rt::entry;
+use core::convert::Infallible;
+use embedded_hal::digital::v2::InputPin;
+use hal::gpio::{gpiob, Floating, Input, Output, Pin, PullUp, PushPull};
+use hal::prelude::*;
+use hal::serial;
+use hal::usb;
+use hal::{stm32, timers};
+use keyberon::debounce::Debouncer;
+use keyberon::key_code::KbHidReport;
+use keyberon::layout::{CustomEvent, Event, Layout};
+use keyberon::matrix::Matrix;
+use nb::block;
+use rtic::app;
+use stm32f0xx_hal as hal;
+use usb_device::bus::UsbBusAllocator;
+use usb_device::class::UsbClass as _;
+use usb_device::device::UsbDeviceState;
 
-use stm32_usbd::UsbBus;
-use stm32f0xx_hal::{pac, prelude::*, usb};
-use usb_device::prelude::*;
+mod layout;
 
-use usbd_human_interface_device::device::keyboard::NKROBootKeyboardInterface;
-use usbd_human_interface_device::page::Keyboard;
-use usbd_human_interface_device::prelude::UsbHidClassBuilder;
+type UsbClass = keyberon::Class<'static, usb::UsbBusType, ()>;
+type UsbDevice = usb_device::device::UsbDevice<'static, usb::UsbBusType>;
 
-#[entry]
-fn main() -> ! {
-    let mut dp = pac::Peripherals::take().unwrap();
+trait ResultExt<T> {
+    fn get(self) -> T;
+}
+impl<T> ResultExt<T> for Result<T, Infallible> {
+    fn get(self) -> T {
+        match self {
+            Ok(v) => v,
+            Err(e) => match e {},
+        }
+    }
+}
 
-    // Reset and clock control
-    let mut rcc = dp
-        .RCC
-        .configure()
-        .hsi48()
-        .enable_crs(dp.CRS) // Clock Recovery System
-        .sysclk(48.mhz())
-        .pclk(24.mhz())
-        .freeze(&mut dp.FLASH);
+#[app(device = crate::hal::pac, peripherals = true, dispatchers = [CEC_CAN])]
+mod app {
+    use super::*;
 
-    let gpioa = dp.GPIOA.split(&mut rcc);
+    #[shared]
+    struct Shared {
+        usb_dev: UsbDevice,
+        usb_class: UsbClass,
+        #[lock_free]
+        layout: Layout<10, 4, 1, ()>,
+    }
 
-    let usb_bus = UsbBus::new(usb::Peripheral {
-        usb: dp.USB,
-        pin_dm: gpioa.pa11,
-        pin_dp: gpioa.pa12,
-    });
+    #[local]
+    struct Local {
+        matrix: Matrix<Pin<Input<PullUp>>, Pin<Output<PushPull>>, 5, 4>,
+        debouncer: Debouncer<[[bool; 5]; 4]>,
+        timer: timers::Timer<stm32::TIM3>,
+        /*
+                tx: serial::Tx<hal::pac::USART1>,
+                rx: serial::Rx<hal::pac::USART1>,
+        */
+        buf: [u8; 4],
+    }
 
-    let mut usb_dev = UsbDeviceBuilder::new(&usb_bus, UsbVidPid(0x1209, 0x0001))
-        .manufacturer("usbd-human-interface-device")
-        .product("NKRO Keyboard")
-        .serial_number("TEST")
-        .build();
+    #[init(local = [bus: Option<UsbBusAllocator<usb::UsbBusType>> = None])]
+    fn init(mut c: init::Context) -> (Shared, Local, init::Monotonics) {
+        let mut rcc = c
+            .device
+            .RCC
+            .configure()
+            .hsi48()
+            .enable_crs(c.device.CRS)
+            .sysclk(48.mhz())
+            .pclk(24.mhz())
+            .freeze(&mut c.device.FLASH);
 
-    //let mut keyboard = UsbHidClassBuilder::new()
-    //    .add_interface(NKROBootKeyboardInterface::default_config())
-    //    .build(&usb_dev);
+        let gpioa = c.device.GPIOA.split(&mut rcc);
+        let gpiob = c.device.GPIOB.split(&mut rcc);
 
-    //let timer = Timer::new(pac.TIMER, &mut pac.RESETS);
-    //let mut input_count_down = timer.count_down();
-    //input_count_down.start(10.millis());
+        let usb = usb::Peripheral {
+            usb: c.device.USB,
+            pin_dm: gpioa.pa11,
+            pin_dp: gpioa.pa12,
+        };
+        *c.local.bus = Some(usb::UsbBusType::new(usb));
+        let usb_bus = c.local.bus.as_ref().unwrap();
 
-    //let mut tick_count_down = timer.count_down();
-    //tick_count_down.start(1.millis());
+        let usb_class = keyberon::new_class(usb_bus, ());
+        let usb_dev = keyberon::new_device(usb_bus);
 
-    loop {
-        //let keys = &[Keyboard::A];
+        let mut timer = timers::Timer::tim3(c.device.TIM3, 1.khz(), &mut rcc);
+        timer.listen(timers::Event::TimeOut);
 
-        //keyboard.interface().write_report(keys).ok();
+        /*
+                let (pa10, pa11) = (gpioa.pa10, gpioa.pa11);
+                let pins = cortex_m::interrupt::free(move |cs| {
+                    (pa10.into_alternate_af1(cs), pa11.into_alternate_af1(cs))
+                });
+                let mut serial = serial::Serial::usart1(c.device.USART1, pins, 38_400.bps(), &mut rcc);
+                serial.listen(serial::Event::Rxne);
+                let (tx, rx) = serial.split();
+        */
 
-        //tick once per ms
-        //if tick_count_down.wait().is_ok() {
-        //    keyboard.interface().tick().unwrap();
-        //}
+        let matrix = cortex_m::interrupt::free(move |cs| {
+            Matrix::new(
+                [
+                    // cols
+                    gpiob.pb8.into_pull_up_input(cs).downgrade(),
+                    gpiob.pb4.into_pull_up_input(cs).downgrade(),
+                    gpiob.pb3.into_pull_up_input(cs).downgrade(),
+                    gpioa.pa15.into_pull_up_input(cs).downgrade(),
+                    gpioa.pa14.into_pull_up_input(cs).downgrade(),
+                ],
+                [
+                    // rows
+                    gpiob.pb7.into_push_pull_output(cs).downgrade(),
+                    gpiob.pb6.into_push_pull_output(cs).downgrade(),
+                    gpiob.pb5.into_push_pull_output(cs).downgrade(),
+                    gpioa.pa2.into_push_pull_output(cs).downgrade(),
+                ],
+            )
+        });
 
-        //if usb_dev.poll(&mut [&mut keyboard]) {
-        //    match keyboard.interface().read_report() {
-        //        Ok(l) => {}
-        //        _ => {}
-        //    }
-        //}
+        (
+            Shared {
+                usb_dev,
+                usb_class,
+                layout: Layout::new(&crate::layout::LAYERS),
+            },
+            Local {
+                timer,
+                debouncer: Debouncer::new([[false; 5]; 4], [[false; 5]; 4], 5),
+                matrix: matrix.get(),
+                /*
+                                tx,
+                                rx,
+                */
+                buf: [0; 4],
+            },
+            init::Monotonics(),
+        )
+    }
+
+    /*
+        #[task(binds = USART1, priority = 4, local = [rx, buf])]
+        fn rx(c: rx::Context) {
+            if let Ok(b) = c.local.rx.read() {
+                c.local.buf.rotate_left(1);
+                c.local.buf[3] = b;
+
+                if c.local.buf[3] == b'\n' {
+                    if let Ok(event) = de(&c.local.buf[..]) {
+                        handle_event::spawn(event).unwrap();
+                    }
+                }
+            }
+        }
+    */
+
+    #[task(binds = USB, priority = 3, shared = [usb_dev, usb_class])]
+    fn usb_rx(c: usb_rx::Context) {
+        (c.shared.usb_dev, c.shared.usb_class).lock(|usb_dev, usb_class| {
+            if usb_dev.poll(&mut [usb_class]) {
+                usb_class.poll();
+            }
+        });
+    }
+
+    #[task(priority = 2, capacity = 8, shared = [layout])]
+    fn handle_event(c: handle_event::Context, event: Event) {
+        c.shared.layout.event(event)
+    }
+
+    #[task(priority = 2, shared = [usb_dev, usb_class, layout])]
+    fn tick_keyberon(mut c: tick_keyberon::Context) {
+        let tick = c.shared.layout.tick();
+        if c.shared.usb_dev.lock(|d| d.state()) != UsbDeviceState::Configured {
+            return;
+        }
+        match tick {
+            CustomEvent::Release(()) => unsafe { cortex_m::asm::bootload(0x1FFFC800 as _) },
+            _ => (),
+        }
+        let report: KbHidReport = c.shared.layout.keycodes().collect();
+        if !c
+            .shared
+            .usb_class
+            .lock(|k| k.device_mut().set_keyboard_report(report.clone()))
+        {
+            return;
+        }
+        while let Ok(0) = c.shared.usb_class.lock(|k| k.write(report.as_bytes())) {}
+    }
+
+    #[task(
+        binds = TIM3,
+        priority = 1,
+        local = [matrix, debouncer, timer/*, tx*/],
+    )]
+    fn tick(c: tick::Context) {
+        c.local.timer.wait().ok();
+
+        for event in c.local.debouncer.events(c.local.matrix.get().get()) {
+            /*
+                        for &b in &ser(event) {
+                            block!(c.local.tx.write(b)).get();
+                        }
+            */
+            handle_event::spawn(event).unwrap();
+        }
+        tick_keyberon::spawn().unwrap();
+    }
+}
+
+fn de(bytes: &[u8]) -> Result<Event, ()> {
+    match *bytes {
+        [b'P', i, j, b'\n'] => Ok(Event::Press(i, j)),
+        [b'R', i, j, b'\n'] => Ok(Event::Release(i, j)),
+        _ => Err(()),
+    }
+}
+fn ser(e: Event) -> [u8; 4] {
+    match e {
+        Event::Press(i, j) => [b'P', i, j, b'\n'],
+        Event::Release(i, j) => [b'R', i, j, b'\n'],
     }
 }

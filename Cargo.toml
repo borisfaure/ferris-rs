@@ -1,17 +1,22 @@
 [package]
-name = "ferris-rust"
+name = "ferris"
 version = "0.1.0"
+authors = ["Boris Faure <boris@fau.re>"]
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-packed_struct = { version = "0.10", default-features = false }
 cortex-m = "0.7"
-cortex-m-rt = "0.7"
-stm32f0xx-hal = { version = "0.18", features = ["stm32f072", "rt", "stm32-usbd"]}
-embedded-hal = { version = "0.2", features = ["unproven"] }
+cortex-m-rt = { version = "0.7", features = ["device"] }
+stm32f0xx-hal = { version = "0.18", features = ["rt", "stm32f072", "stm32-usbd"] }
 panic-halt = "0.2"
-usbd-human-interface-device = "0.3"
-stm32-usbd = "0.6"
 usb-device= "0.2"
+cortex-m-rtic = "1.0"
+systick-monotonic = "1.0"
+keyberon = { git = "https://github.com/TeXitoi/keyberon", branch = "master" }
+embedded-hal = "0.2"
+nb = "1.0"
+
+[profile.release]
+opt-level = 'z'
+lto = true
+incremental = false
