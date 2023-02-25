@@ -48,7 +48,7 @@ mod app {
         usb_dev: UsbDevice,
         usb_class: UsbClass,
         #[lock_free]
-        layout: Layout<10, 4, 1, ()>,
+        layout: Layout<5, 4, 1, ()>,
     }
 
     #[local]
