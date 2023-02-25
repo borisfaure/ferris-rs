@@ -5,17 +5,14 @@
 use panic_halt as _;
 
 use core::convert::Infallible;
-use embedded_hal::digital::v2::InputPin;
-use hal::gpio::{gpiob, Floating, Input, Output, Pin, PullUp, PushPull};
+use hal::gpio::{Input, Output, Pin, PullUp, PushPull};
 use hal::prelude::*;
-use hal::serial;
 use hal::usb;
 use hal::{stm32, timers};
 use keyberon::debounce::Debouncer;
 use keyberon::key_code::KbHidReport;
 use keyberon::layout::{CustomEvent, Event, Layout};
 use keyberon::matrix::Matrix;
-use nb::block;
 use rtic::app;
 use stm32f0xx_hal as hal;
 use usb_device::bus::UsbBusAllocator;
@@ -57,10 +54,10 @@ mod app {
         debouncer: Debouncer<[[bool; 5]; 4]>,
         timer: timers::Timer<stm32::TIM3>,
         /*
-                tx: serial::Tx<hal::pac::USART1>,
-                rx: serial::Rx<hal::pac::USART1>,
+           tx: serial::Tx<hal::pac::USART1>,
+           rx: serial::Rx<hal::pac::USART1>,
+           buf: [u8; 4],
         */
-        buf: [u8; 4],
     }
 
     #[init(local = [bus: Option<UsbBusAllocator<usb::UsbBusType>> = None])]
@@ -133,10 +130,10 @@ mod app {
                 debouncer: Debouncer::new([[false; 5]; 4], [[false; 5]; 4], 5),
                 matrix: matrix.get(),
                 /*
-                                tx,
-                                rx,
+                   tx,
+                   rx,
+                   buf: [0; 4],
                 */
-                buf: [0; 4],
             },
             init::Monotonics(),
         )
@@ -210,19 +207,5 @@ mod app {
             handle_event::spawn(event).unwrap();
         }
         tick_keyberon::spawn().unwrap();
-    }
-}
-
-fn de(bytes: &[u8]) -> Result<Event, ()> {
-    match *bytes {
-        [b'P', i, j, b'\n'] => Ok(Event::Press(i, j)),
-        [b'R', i, j, b'\n'] => Ok(Event::Release(i, j)),
-        _ => Err(()),
-    }
-}
-fn ser(e: Event) -> [u8; 4] {
-    match e {
-        Event::Press(i, j) => [b'P', i, j, b'\n'],
-        Event::Release(i, j) => [b'R', i, j, b'\n'],
     }
 }

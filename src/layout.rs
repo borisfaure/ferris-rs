@@ -1,5 +1,3 @@
-type Action = keyberon::action::Action<()>;
-
 #[rustfmt::skip]
 pub static LAYERS: keyberon::layout::Layers<5, 4, 1, ()> = keyberon::layout::layout! {
     {
