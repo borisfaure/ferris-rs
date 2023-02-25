@@ -93,9 +93,9 @@ mod app {
         timer.listen(timers::Event::TimeOut);
 
         /*
-                let (pa10, pa11) = (gpioa.pa10, gpioa.pa11);
+                let (pb10, pb11) = (gpiob.pb10, gpiob.pb11);
                 let pins = cortex_m::interrupt::free(move |cs| {
-                    (pa10.into_alternate_af1(cs), pa11.into_alternate_af1(cs))
+                    (pb10.into_alternate_af1(cs), pb11.into_alternate_af1(cs))
                 });
                 let mut serial = serial::Serial::usart1(c.device.USART1, pins, 38_400.bps(), &mut rcc);
                 serial.listen(serial::Event::Rxne);
