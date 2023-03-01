@@ -175,9 +175,10 @@ mod app {
         if c.shared.usb_dev.lock(|d| d.state()) != UsbDeviceState::Configured {
             return;
         }
-        match tick {
-            CustomEvent::Release(()) => unsafe { cortex_m::asm::bootload(0x1FFFC800 as _) },
-            _ => (),
+        if let CustomEvent::Release(()) = tick {
+            unsafe {
+                cortex_m::asm::bootload(0x1FFFC800 as _);
+            }
         }
         let report: KbHidReport = c.shared.layout.keycodes().collect();
         if !c
