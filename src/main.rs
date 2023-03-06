@@ -18,19 +18,18 @@ use keyberon::debounce::Debouncer;
 use keyberon::key_code::KbHidReport;
 use keyberon::layout::{CustomEvent, Event, Layout};
 use keyberon::matrix::Matrix;
-use mcp230xx;
 use rtic::app;
 use stm32f0xx_hal as hal;
 use usb_device::bus::UsbBusAllocator;
 use usb_device::class::UsbClass as _;
 use usb_device::device::UsbDeviceState;
 
+mod io_expander;
 mod layout;
+use io_expander::IoExpander;
 
 type UsbClass = keyberon::Class<'static, usb::UsbBusType, ()>;
 type UsbDevice = usb_device::device::UsbDevice<'static, usb::UsbBusType>;
-type I2c1 = I2c<stm32::I2C1, PB10<Alternate<AF1>>, PB11<Alternate<AF1>>>;
-type IoExpander = mcp230xx::Mcp230xx<I2c1, mcp230xx::Mcp23017>;
 
 trait ResultExt<T> {
     fn get(self) -> T;
@@ -98,14 +97,13 @@ mod app {
         let mut timer = timers::Timer::tim3(c.device.TIM3, 1.khz(), &mut rcc);
         timer.listen(timers::Event::TimeOut);
 
-        let (scl, sda) = cortex_m::interrupt::free(move |cs| {
+        let pins = cortex_m::interrupt::free(move |cs| {
             (
                 gpiob.pb10.into_alternate_af1(cs), // SCL
                 gpiob.pb11.into_alternate_af1(cs), // SDA
             )
         });
-        let mut i2c = I2c::i2c1(c.device.I2C1, (scl, sda), 100.khz(), &mut rcc);
-        let io_expander: IoExpander = mcp230xx::Mcp230xx::new_default(i2c).unwrap();
+        let io_expander = IoExpander::new(c.device.I2C1, pins, &mut rcc);
 
         let matrix = cortex_m::interrupt::free(move |cs| {
             Matrix::new(
