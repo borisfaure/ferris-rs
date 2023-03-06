@@ -5,14 +5,20 @@
 use panic_halt as _;
 
 use core::convert::Infallible;
-use hal::gpio::{Input, Output, Pin, PullUp, PushPull};
+use hal::gpio::{gpiob::PB10, gpiob::PB11, Alternate, Input, Output, Pin, PullUp, PushPull, AF1};
 use hal::prelude::*;
 use hal::usb;
+use hal::{
+    i2c::{I2c, SclPin, SdaPin},
+    pac,
+    prelude::*,
+};
 use hal::{stm32, timers};
 use keyberon::debounce::Debouncer;
 use keyberon::key_code::KbHidReport;
 use keyberon::layout::{CustomEvent, Event, Layout};
 use keyberon::matrix::Matrix;
+use mcp230xx;
 use rtic::app;
 use stm32f0xx_hal as hal;
 use usb_device::bus::UsbBusAllocator;
@@ -23,6 +29,8 @@ mod layout;
 
 type UsbClass = keyberon::Class<'static, usb::UsbBusType, ()>;
 type UsbDevice = usb_device::device::UsbDevice<'static, usb::UsbBusType>;
+type I2c1 = I2c<stm32::I2C1, PB10<Alternate<AF1>>, PB11<Alternate<AF1>>>;
+type IoExpander = mcp230xx::Mcp230xx<I2c1, mcp230xx::Mcp23017>;
 
 trait ResultExt<T> {
     fn get(self) -> T;
@@ -44,6 +52,7 @@ mod app {
     struct Shared {
         usb_dev: UsbDevice,
         usb_class: UsbClass,
+        io_expander: IoExpander,
         #[lock_free]
         layout: Layout<10, 4, 1, ()>,
     }
@@ -89,15 +98,14 @@ mod app {
         let mut timer = timers::Timer::tim3(c.device.TIM3, 1.khz(), &mut rcc);
         timer.listen(timers::Event::TimeOut);
 
-        /*
-                let (pb10, pb11) = (gpiob.pb10, gpiob.pb11);
-                let pins = cortex_m::interrupt::free(move |cs| {
-                    (pb10.into_alternate_af1(cs), pb11.into_alternate_af1(cs))
-                });
-                let mut serial = serial::Serial::usart1(c.device.USART1, pins, 38_400.bps(), &mut rcc);
-                serial.listen(serial::Event::Rxne);
-                let (tx, rx) = serial.split();
-        */
+        let (scl, sda) = cortex_m::interrupt::free(move |cs| {
+            (
+                gpiob.pb10.into_alternate_af1(cs), // SCL
+                gpiob.pb11.into_alternate_af1(cs), // SDA
+            )
+        });
+        let mut i2c = I2c::i2c1(c.device.I2C1, (scl, sda), 100.khz(), &mut rcc);
+        let io_expander: IoExpander = mcp230xx::Mcp230xx::new_default(i2c).unwrap();
 
         let matrix = cortex_m::interrupt::free(move |cs| {
             Matrix::new(
@@ -123,6 +131,7 @@ mod app {
             Shared {
                 usb_dev,
                 usb_class,
+                io_expander,
                 layout: Layout::new(&crate::layout::LAYERS),
             },
             Local {
