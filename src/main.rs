@@ -99,7 +99,7 @@ mod app {
                 gpiob.pb11.into_alternate_af1(cs), // SDA
             )
         });
-        let io_expander = IoExpander::new(c.device.I2C1, pins, &mut rcc);
+        let io_expander = IoExpander::new(c.device.I2C2, pins, &mut rcc);
         let transform: fn(Event) -> Event = if io_expander.is_ok {
             |e| e
         } else {

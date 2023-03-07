@@ -1,6 +1,6 @@
 use hal::gpio::{gpiob::PB10, gpiob::PB11, Alternate, AF1};
 use hal::i2c::I2c;
-use hal::pac::I2C1;
+use hal::pac::I2C2;
 use hal::prelude::*;
 use hal::rcc::Rcc;
 use hal::stm32;
@@ -8,9 +8,9 @@ use mcp230xx::{Direction, Level, Mcp23017, Mcp230xx};
 use stm32f0xx_hal as hal;
 
 pub type Pins = (PB10<Alternate<AF1>>, PB11<Alternate<AF1>>);
-pub type I2c1 = I2c<stm32::I2C1, PB10<Alternate<AF1>>, PB11<Alternate<AF1>>>;
+pub type I2c2 = I2c<stm32::I2C2, PB10<Alternate<AF1>>, PB11<Alternate<AF1>>>;
 pub struct IoExpander {
-    mcp: Mcp230xx<I2c1, Mcp23017>,
+    mcp: Mcp230xx<I2c2, Mcp23017>,
     pub is_ok: bool,
 }
 
@@ -63,14 +63,14 @@ fn cols() -> [GpioPin; 5] {
 
 impl IoExpander {
     /// Create a new IoExpander and initialize the pins
-    pub fn new(i2c: I2C1, pins: Pins, rcc: &mut Rcc) -> Self {
-        let mut i2c = I2c::i2c1(i2c, pins, 100.khz(), rcc);
+    pub fn new(i2c: I2C2, pins: Pins, rcc: &mut Rcc) -> Self {
+        let mut i2c = I2c::i2c2(i2c, pins, 100.khz(), rcc);
         let mut data = [0x0u8, 0xffu8, 0xf0u8];
         let addr = 0x20;
         // this panics or makes the mcu panic
         //let is_ok = i2c.write(addr, &data).is_ok();
         let is_ok = false;
-        let mcp = Mcp230xx::new_default(i2c).unwrap();
+        let mcp: Mcp230xx<I2c2, Mcp23017> = Mcp230xx::new_default(i2c).unwrap();
         let io_expander = Self { mcp, is_ok };
         /*
         for pin in rows() {
