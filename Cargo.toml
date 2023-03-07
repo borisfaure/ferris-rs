@@ -19,7 +19,6 @@ mcp230xx = { git = "https://github.com/borisfaure/mcp230xx", branch = "master" }
 #mcp230xx = { path = "../mcp230xx" }
 embedded-hal = "0.2"
 nb = "1.0"
-enum-iterator = "1.4"
 
 [profile.release]
 opt-level = 'z'

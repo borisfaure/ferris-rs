@@ -5,14 +5,9 @@
 use panic_halt as _;
 
 use core::convert::Infallible;
-use hal::gpio::{gpiob::PB10, gpiob::PB11, Alternate, Input, Output, Pin, PullUp, PushPull, AF1};
+use hal::gpio::{Input, Output, Pin, PullUp, PushPull};
 use hal::prelude::*;
 use hal::usb;
-use hal::{
-    i2c::{I2c, SclPin, SdaPin},
-    pac,
-    prelude::*,
-};
 use hal::{stm32, timers};
 use keyberon::debounce::Debouncer;
 use keyberon::key_code::KbHidReport;
@@ -61,6 +56,7 @@ mod app {
         matrix: Matrix<Pin<Input<PullUp>>, Pin<Output<PushPull>>, 5, 4>,
         debouncer: Debouncer<[[bool; 5]; 4]>,
         timer: timers::Timer<stm32::TIM3>,
+        transform: fn(Event) -> Event,
         /*
            tx: serial::Tx<hal::pac::USART1>,
            rx: serial::Rx<hal::pac::USART1>,
@@ -104,6 +100,11 @@ mod app {
             )
         });
         let io_expander = IoExpander::new(c.device.I2C1, pins, &mut rcc);
+        let transform: fn(Event) -> Event = if io_expander.is_ok {
+            |e| e
+        } else {
+            |e| e.transform(|i, j| (i, 9 - j))
+        };
 
         let matrix = cortex_m::interrupt::free(move |cs| {
             Matrix::new(
@@ -136,6 +137,7 @@ mod app {
                 timer,
                 debouncer: Debouncer::new([[false; 5]; 4], [[false; 5]; 4], 5),
                 matrix: matrix.get(),
+                transform,
                 /*
                    tx,
                    rx,
@@ -201,17 +203,17 @@ mod app {
     #[task(
         binds = TIM3,
         priority = 1,
-        local = [matrix, debouncer, timer/*, tx*/],
+        local = [matrix, debouncer, timer, transform],
     )]
     fn tick(c: tick::Context) {
         c.local.timer.wait().ok();
 
-        for event in c.local.debouncer.events(c.local.matrix.get().get()) {
-            /*
-                        for &b in &ser(event) {
-                            block!(c.local.tx.write(b)).get();
-                        }
-            */
+        for event in c
+            .local
+            .debouncer
+            .events(c.local.matrix.get().get())
+            .map(c.local.transform)
+        {
             handle_event::spawn(event).unwrap();
         }
         tick_keyberon::spawn().unwrap();
