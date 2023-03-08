@@ -1,0 +1,24 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  checks_and_builds:
+    strategy:
+      fail-fast: false
+      matrix:
+        action:
+          - fmt
+          - check
+          - clippy
+          - build
+          - build-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+      - name: install rust
+        run: curl --proto '=https' --tlsv1.3 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+      - name: install stm32 target
+        run: rustup target add thumbv6m-none-eabi
+      - name: act
+        run: .github/scripts/ci.bash ${{ matrix.action }}
