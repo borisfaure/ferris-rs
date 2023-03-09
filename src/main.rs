@@ -57,11 +57,6 @@ mod app {
         debouncer: Debouncer<[[bool; 5]; 4]>,
         timer: timers::Timer<stm32::TIM3>,
         transform: fn(Event) -> Event,
-        /*
-           tx: serial::Tx<hal::pac::USART1>,
-           rx: serial::Rx<hal::pac::USART1>,
-           buf: [u8; 4],
-        */
     }
 
     #[init(local = [bus: Option<UsbBusAllocator<usb::UsbBusType>> = None])]
@@ -138,31 +133,10 @@ mod app {
                 debouncer: Debouncer::new([[false; 5]; 4], [[false; 5]; 4], 5),
                 matrix: matrix.get(),
                 transform,
-                /*
-                   tx,
-                   rx,
-                   buf: [0; 4],
-                */
             },
             init::Monotonics(),
         )
     }
-
-    /*
-        #[task(binds = USART1, priority = 4, local = [rx, buf])]
-        fn rx(c: rx::Context) {
-            if let Ok(b) = c.local.rx.read() {
-                c.local.buf.rotate_left(1);
-                c.local.buf[3] = b;
-
-                if c.local.buf[3] == b'\n' {
-                    if let Ok(event) = de(&c.local.buf[..]) {
-                        handle_event::spawn(event).unwrap();
-                    }
-                }
-            }
-        }
-    */
 
     #[task(binds = USB, priority = 3, shared = [usb_dev, usb_class])]
     fn usb_rx(c: usb_rx::Context) {
