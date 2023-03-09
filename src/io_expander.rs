@@ -4,45 +4,28 @@ use hal::pac::I2C2;
 use hal::prelude::*;
 use hal::rcc::Rcc;
 use hal::stm32;
-use mcp230xx::{Direction, Level, Mcp23017, Mcp230xx};
 use stm32f0xx_hal as hal;
 
 pub type Pins = (PB10<Alternate<AF1>>, PB11<Alternate<AF1>>);
 pub type I2c2 = I2c<stm32::I2C2, PB10<Alternate<AF1>>, PB11<Alternate<AF1>>>;
 pub struct IoExpander {
-    mcp: Mcp230xx<I2c2, Mcp23017>,
+    i2c: I2c2,
     pub is_ok: bool,
 }
 
 /// Helper enum to handle Rows/Cols in code
 #[derive(Debug, Copy, Clone)]
+#[repr(u8)]
 pub enum GpioPin {
-    Row0,
-    Row1,
-    Row2,
-    Row3,
-    Col5,
-    Col6,
-    Col7,
-    Col8,
-    Col9,
-}
-
-/// Helper to convert GpioPin into pins on MCP23017
-impl From<GpioPin> for Mcp23017 {
-    fn from(x: GpioPin) -> Self {
-        match x {
-            GpioPin::Row0 => Self::B0,
-            GpioPin::Row1 => Self::B1,
-            GpioPin::Row2 => Self::B2,
-            GpioPin::Row3 => Self::B3,
-            GpioPin::Col5 => Self::A0,
-            GpioPin::Col6 => Self::A1,
-            GpioPin::Col7 => Self::A2,
-            GpioPin::Col8 => Self::A3,
-            GpioPin::Col9 => Self::A4,
-        }
-    }
+    Col5 = 0x0_u8,
+    Col6 = 0x1_u8,
+    Col7 = 0x2_u8,
+    Col8 = 0x3_u8,
+    Col9 = 0x4_u8,
+    Row0 = 0x8_u8,
+    Row1 = 0x9_u8,
+    Row2 = 0xa_u8,
+    Row3 = 0xb_u8,
 }
 
 /// Helper to get the Row pins
@@ -61,37 +44,41 @@ fn cols() -> [GpioPin; 5] {
     ]
 }
 
+#[allow(clippy::upper_case_acronyms)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[repr(u8)]
+enum Register {
+    IODIR = 0x00,         // i/o direction register
+    GPPU = 0x0C,          // GPIO pull-up resistor register
+    MCP23017_GPIO = 0x12, // general purpose i/o port register (write modifies OLAT)
+    OLAT = 0x14,          // output latch register
+}
+
+const MCP_ADDR: u8 = 0x20;
+
 impl IoExpander {
+    fn init(&mut self) {
+        // set pin direction
+        // - input   : input  : 1
+        // - driving : output : 0
+        // This means: we will read all the bits on GPIOA
+        // This means: we will write to the pins 0-4 on GPIOB (in select_rows)
+        let data: [u8; 3] = [Register::IODIR as u8, 0b11111111, 0b11110000];
+        let mut is_ok = self.i2c.write(MCP_ADDR, &data).is_ok();
+
+        if !is_ok {
+            /* Set Pull Up */
+            let data: [u8; 3] = [Register::GPPU as u8, 0b11111111, 0b11110000];
+            is_ok = self.i2c.write(MCP_ADDR, &data).is_ok();
+        }
+        self.is_ok = is_ok;
+    }
+
     /// Create a new IoExpander and initialize the pins
     pub fn new(i2c: I2C2, pins: Pins, rcc: &mut Rcc) -> Self {
         let mut i2c = I2c::i2c2(i2c, pins, 100.khz(), rcc);
-        let mut data = [0x0u8, 0xffu8, 0xf0u8];
-        let addr = 0x20;
-        // this panics or makes the mcu panic
-        //let is_ok = i2c.write(addr, &data).is_ok();
-        let is_ok = false;
-        let mcp: Mcp230xx<I2c2, Mcp23017> = Mcp230xx::new_default(i2c).unwrap();
-        let io_expander = Self { mcp, is_ok };
-        /*
-        for pin in rows() {
-            io_expander
-                .set_direction(pin.into(), Direction::Output)
-                .unwrap();
-            io_expander
-                .set_gpio(pin.into(), mcp230xx::Level::Low)
-                .unwrap();
-        }
-                */
-        /*
-        for pin in cols() {
-            io_expander
-                .set_direction(pin.into(), mcp230xx::Direction::Input)
-                .unwrap();
-            io_expander
-                .set_gpio(pin.into(), mcp230xx::Level::High)
-                .unwrap();
-        }
-        */
+        let mut io_expander = Self { i2c, is_ok: true };
+        io_expander.init();
         io_expander
     }
 }
