@@ -21,7 +21,9 @@ use usb_device::device::UsbDeviceState;
 
 mod io_expander;
 mod layout;
+mod right;
 use io_expander::IoExpander;
+use right::Right;
 
 type UsbClass = keyberon::Class<'static, usb::UsbBusType, ()>;
 type UsbDevice = usb_device::device::UsbDevice<'static, usb::UsbBusType>;
@@ -46,15 +48,16 @@ mod app {
     struct Shared {
         usb_dev: UsbDevice,
         usb_class: UsbClass,
-        io_expander: IoExpander,
+        right: Right,
         #[lock_free]
         layout: Layout<10, 4, 1, ()>,
     }
 
     #[local]
     struct Local {
-        matrix: Matrix<Pin<Input<PullUp>>, Pin<Output<PushPull>>, 5, 4>,
-        debouncer: Debouncer<[[bool; 5]; 4]>,
+        matrix: Matrix<Pin<Input<PullUp>>, Pin<Output<PushPull>>, 5, 4>, // left
+        debouncer_left: Debouncer<[[bool; 5]; 4]>,
+        debouncer_right: Debouncer<[[bool; 5]; 4]>,
         timer: timers::Timer<stm32::TIM3>,
         transform: fn(Event) -> Event,
     }
@@ -95,7 +98,8 @@ mod app {
             )
         });
         let io_expander = IoExpander::new(c.device.I2C2, pins, &mut rcc);
-        let transform: fn(Event) -> Event = if io_expander.is_ok {
+        let right = Right::new(io_expander);
+        let transform: fn(Event) -> Event = if right.is_ok {
             |e| e
         } else {
             |e| e.transform(|i, j| (i, 9 - j))
@@ -125,12 +129,13 @@ mod app {
             Shared {
                 usb_dev,
                 usb_class,
-                io_expander,
+                right,
                 layout: Layout::new(&crate::layout::LAYERS),
             },
             Local {
                 timer,
-                debouncer: Debouncer::new([[false; 5]; 4], [[false; 5]; 4], 5),
+                debouncer_left: Debouncer::new([[false; 5]; 4], [[false; 5]; 4], 5),
+                debouncer_right: Debouncer::new([[false; 5]; 4], [[false; 5]; 4], 5),
                 matrix: matrix.get(),
                 transform,
             },
@@ -177,14 +182,14 @@ mod app {
     #[task(
         binds = TIM3,
         priority = 1,
-        local = [matrix, debouncer, timer, transform],
+        local = [matrix, debouncer_left, debouncer_right, timer, transform],
     )]
     fn tick(c: tick::Context) {
         c.local.timer.wait().ok();
 
         for event in c
             .local
-            .debouncer
+            .debouncer_left
             .events(c.local.matrix.get().get())
             .map(c.local.transform)
         {
