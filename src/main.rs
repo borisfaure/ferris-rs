@@ -48,7 +48,6 @@ mod app {
     struct Shared {
         usb_dev: UsbDevice,
         usb_class: UsbClass,
-        right: Right,
         #[lock_free]
         layout: Layout<10, 4, 1, ()>,
     }
@@ -56,6 +55,7 @@ mod app {
     #[local]
     struct Local {
         matrix: Matrix<Pin<Input<PullUp>>, Pin<Output<PushPull>>, 5, 4>, // left
+        right: Right,
         debouncer_left: Debouncer<[[bool; 5]; 4]>,
         debouncer_right: Debouncer<[[bool; 5]; 4]>,
         timer: timers::Timer<stm32::TIM3>,
@@ -129,14 +129,14 @@ mod app {
             Shared {
                 usb_dev,
                 usb_class,
-                right,
                 layout: Layout::new(&crate::layout::LAYERS),
             },
             Local {
-                timer,
+                matrix: matrix.get(),
+                right,
                 debouncer_left: Debouncer::new([[false; 5]; 4], [[false; 5]; 4], 5),
                 debouncer_right: Debouncer::new([[false; 5]; 4], [[false; 5]; 4], 5),
-                matrix: matrix.get(),
+                timer,
                 transform,
             },
             init::Monotonics(),
@@ -182,17 +182,15 @@ mod app {
     #[task(
         binds = TIM3,
         priority = 1,
-        local = [matrix, debouncer_left, debouncer_right, timer, transform],
+        local = [matrix, debouncer_left, debouncer_right, timer, transform, right],
     )]
     fn tick(c: tick::Context) {
         c.local.timer.wait().ok();
 
-        for event in c
-            .local
-            .debouncer_left
-            .events(c.local.matrix.get().get())
-            .map(c.local.transform)
-        {
+        for event in c.local.debouncer_left.events(c.local.matrix.get().get()) {
+            handle_event::spawn(event).unwrap();
+        }
+        for event in c.local.debouncer_right.events(c.local.right.get().get()) {
             handle_event::spawn(event).unwrap();
         }
         tick_keyberon::spawn().unwrap();

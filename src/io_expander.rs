@@ -48,10 +48,11 @@ fn cols() -> [GpioPin; 5] {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(u8)]
 enum Register {
-    IODIR = 0x00,         // i/o direction register
-    GPPU = 0x0C,          // GPIO pull-up resistor register
-    MCP23017_GPIO = 0x12, // general purpose i/o port register (write modifies OLAT)
-    OLAT = 0x14,          // output latch register
+    IODIR = 0x00, // i/o direction register
+    GPPU = 0x0C,  // GPIO pull-up resistor register
+    GPIOA = 0x12, // general purpose i/o port register (write modifies OLAT)
+    GPIOB = 0x13, // general purpose i/o port register (write modifies OLAT)
+    OLAT = 0x14,  // output latch register
 }
 
 const MCP_ADDR: u8 = 0x20;
@@ -80,5 +81,23 @@ impl IoExpander {
         let mut io_expander = Self { i2c, is_ok: true };
         io_expander.init();
         io_expander
+    }
+
+    /// I2C code to select one row
+    ///
+    /// Select the desired row only by writing a byte for the entire GPIOB bus
+    /// where only the bit representing the row we want to select is
+    /// a zero (write instruction) and every other bit is a one.
+    fn select_row(&mut self, row: u8) {
+        let row_selector: u8 = 0xff_u8 & !(1_u8 << row);
+        let data: [u8; 2] = [Register::GPIOB as u8, row_selector];
+        let mut is_ok = self.i2c.write(MCP_ADDR, &data).is_ok();
+    }
+
+    /// Get which keys are pressed on a specific row
+    pub fn get_row(&mut self, row: u8) -> [bool; 5] {
+        self.select_row(row);
+        // TODO
+        [false; 5]
     }
 }
