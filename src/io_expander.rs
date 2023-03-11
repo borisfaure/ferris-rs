@@ -13,36 +13,10 @@ pub struct IoExpander {
     pub is_ok: bool,
 }
 
-/// Helper enum to handle Rows/Cols in code
-#[derive(Debug, Copy, Clone)]
-#[repr(u8)]
-pub enum GpioPin {
-    Col5 = 0x0_u8,
-    Col6 = 0x1_u8,
-    Col7 = 0x2_u8,
-    Col8 = 0x3_u8,
-    Col9 = 0x4_u8,
-    Row0 = 0x8_u8,
-    Row1 = 0x9_u8,
-    Row2 = 0xa_u8,
-    Row3 = 0xb_u8,
-}
-
-/// Helper to get the Row pins
-fn rows() -> [GpioPin; 4] {
-    [GpioPin::Row0, GpioPin::Row1, GpioPin::Row2, GpioPin::Row3]
-}
-
-/// Helper to get the Column pins
-fn cols() -> [GpioPin; 5] {
-    [
-        GpioPin::Col5,
-        GpioPin::Col6,
-        GpioPin::Col7,
-        GpioPin::Col8,
-        GpioPin::Col9,
-    ]
-}
+/**
+ * Rows are on GPIOB: PB0 to PB3
+ * Cols are on GPIOA: PA0 to PA4
+ */
 
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
