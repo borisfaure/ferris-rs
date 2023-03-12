@@ -183,7 +183,12 @@ mod app {
         for event in c.local.debouncer_left.events(c.local.matrix.get().get()) {
             handle_event::spawn(event).unwrap();
         }
-        for event in c.local.debouncer_right.events(c.local.right.get().get()) {
+        for event in c
+            .local
+            .debouncer_right
+            .events(c.local.right.get().get())
+            .map(|e| e.transform(|i, j| (i, 5 + j)))
+        {
             handle_event::spawn(event).unwrap();
         }
         tick_keyberon::spawn().unwrap();

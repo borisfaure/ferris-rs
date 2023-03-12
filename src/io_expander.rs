@@ -97,7 +97,7 @@ impl IoExpander {
         //    data[0]         = ~(data[0]);
         //}
         for i in 0..=4 {
-            if (data[0] & (1_u8 << (7 - i))) == 0_u8 {
+            if (data[0] & (1_u8 << i)) == 0_u8 {
                 cols[i] = true;
             }
         }
