@@ -42,7 +42,7 @@ impl IoExpander {
         if self.i2c.write(MCP_ADDR, &data).is_err() {
             /* Set Pull Up */
             let data: [u8; 3] = [Register::GPPU as u8, 0b11111111, 0b11110000];
-            self.i2c.write(MCP_ADDR, &data).unwrap();
+            self.i2c.write(MCP_ADDR, &data);
         }
     }
 
@@ -73,18 +73,22 @@ impl IoExpander {
         self.select_row(row);
 
         // Read all the pins on GPIOA
-        let mut data: [u8; 1] = [0u8];
-        if self
-            .i2c
-            .write_read(MCP_ADDR, &[Register::GPIOA as u8], &mut data)
-            .is_err()
-        {
-            self.reset();
-            self.select_row(row);
-            self.i2c
-                .write_read(MCP_ADDR, &[Register::GPIOA as u8], &mut data)
-                .unwrap();
-        }
+        let mut data: [u8; 1] = [0];
+        //self.i2c
+        //    .write_read(MCP_ADDR, &[Register::GPIOA as u8], &mut data);
+        //if self
+        //    .i2c
+        //    .write_read(MCP_ADDR, &[Register::GPIOA as u8], &mut data)
+        //    .is_err()
+        //{
+        //    self.reset();
+        //    self.select_row(row);
+        //    self.i2c
+        //        .write_read(MCP_ADDR, &[Register::GPIOA as u8], &mut data)
+        //        .unwrap();
+        //}
+        self.i2c.write(MCP_ADDR, &[Register::GPIOA as u8]);
+        self.i2c.read(MCP_ADDR, &mut data);
         let mut cols = [false; 5];
         // The return value is a row as represented in the generic matrix code were the rightmost bits represent the lower columns and zeroes represent non-depressed keys while ones represent depressed keys.
         // Since the pins connected to eact columns are sequential, and counting from zero up (col 5 -> GPIOA0, col 6 -> GPIOA1 and so on), the only transformation needed is a bitwise not to swap all zeroes and ones.
@@ -92,9 +96,8 @@ impl IoExpander {
         //    mcp23017_status = i2c_receive(I2C_ADDR_READ, data, sizeof(data), MCP23017_I2C_TIMEOUT);
         //    data[0]         = ~(data[0]);
         //}
-        // TODO
         for i in 0..=4 {
-            if (data[0] & 1_u8 << i) != 0_u8 {
+            if (data[0] & (1_u8 << (7 - i))) == 0_u8 {
                 cols[i] = true;
             }
         }
