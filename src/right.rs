@@ -1,15 +1,12 @@
-use crate::IoExpander;
+use crate::io_expander::IoExpander;
 
 pub struct Right {
     io_expander: IoExpander,
-    pub is_ok: bool,
 }
-
 impl Right {
     /// Create a new structure representing the right side of the keyboard
     pub fn new(io_expander: IoExpander) -> Self {
-        let is_ok = io_expander.is_ok;
-        Self { io_expander, is_ok }
+        Self { io_expander }
     }
 
     /// Scan the right side to know whick keys are pressed

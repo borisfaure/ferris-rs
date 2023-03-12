@@ -10,7 +10,6 @@ pub type Pins = (PB10<Alternate<AF1>>, PB11<Alternate<AF1>>);
 pub type I2c2 = I2c<stm32::I2C2, PB10<Alternate<AF1>>, PB11<Alternate<AF1>>>;
 pub struct IoExpander {
     i2c: I2c2,
-    pub is_ok: bool,
 }
 
 /**
@@ -32,28 +31,26 @@ enum Register {
 const MCP_ADDR: u8 = 0x20;
 
 impl IoExpander {
-    fn init(&mut self) {
+    fn reset(&mut self) {
         // set pin direction
         // - input   : input  : 1
         // - driving : output : 0
         // This means: we will read all the bits on GPIOA
         // This means: we will write to the pins 0-4 on GPIOB (in select_rows)
         let data: [u8; 3] = [Register::IODIR as u8, 0b11111111, 0b11110000];
-        let mut is_ok = self.i2c.write(MCP_ADDR, &data).is_ok();
 
-        if !is_ok {
+        if self.i2c.write(MCP_ADDR, &data).is_err() {
             /* Set Pull Up */
             let data: [u8; 3] = [Register::GPPU as u8, 0b11111111, 0b11110000];
-            is_ok = self.i2c.write(MCP_ADDR, &data).is_ok();
+            self.i2c.write(MCP_ADDR, &data).unwrap();
         }
-        self.is_ok = is_ok;
     }
 
     /// Create a new IoExpander and initialize the pins
     pub fn new(i2c: I2C2, pins: Pins, rcc: &mut Rcc) -> Self {
-        let mut i2c = I2c::i2c2(i2c, pins, 100.khz(), rcc);
-        let mut io_expander = Self { i2c, is_ok: true };
-        io_expander.init();
+        let i2c = I2c::i2c2(i2c, pins, 100.khz(), rcc);
+        let mut io_expander = Self { i2c };
+        io_expander.reset();
         io_expander
     }
 
@@ -65,13 +62,42 @@ impl IoExpander {
     fn select_row(&mut self, row: u8) {
         let row_selector: u8 = 0xff_u8 & !(1_u8 << row);
         let data: [u8; 2] = [Register::GPIOB as u8, row_selector];
-        let mut is_ok = self.i2c.write(MCP_ADDR, &data).is_ok();
+        if self.i2c.write(MCP_ADDR, &data).is_err() {
+            self.reset();
+            self.i2c.write(MCP_ADDR, &data).unwrap();
+        }
     }
 
     /// Get which keys are pressed on a specific row
     pub fn get_row(&mut self, row: u8) -> [bool; 5] {
         self.select_row(row);
+
+        // Read all the pins on GPIOA
+        let mut data: [u8; 1] = [0u8];
+        if self
+            .i2c
+            .write_read(MCP_ADDR, &[Register::GPIOA as u8], &mut data)
+            .is_err()
+        {
+            self.reset();
+            self.select_row(row);
+            self.i2c
+                .write_read(MCP_ADDR, &[Register::GPIOA as u8], &mut data)
+                .unwrap();
+        }
+        let mut cols = [false; 5];
+        // The return value is a row as represented in the generic matrix code were the rightmost bits represent the lower columns and zeroes represent non-depressed keys while ones represent depressed keys.
+        // Since the pins connected to eact columns are sequential, and counting from zero up (col 5 -> GPIOA0, col 6 -> GPIOA1 and so on), the only transformation needed is a bitwise not to swap all zeroes and ones.
+        //if (!mcp23017_status) {
+        //    mcp23017_status = i2c_receive(I2C_ADDR_READ, data, sizeof(data), MCP23017_I2C_TIMEOUT);
+        //    data[0]         = ~(data[0]);
+        //}
         // TODO
-        [false; 5]
+        for i in 0..=4 {
+            if (data[0] & 1_u8 << i) != 0_u8 {
+                cols[i] = true;
+            }
+        }
+        cols
     }
 }

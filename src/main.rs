@@ -59,7 +59,6 @@ mod app {
         debouncer_left: Debouncer<[[bool; 5]; 4]>,
         debouncer_right: Debouncer<[[bool; 5]; 4]>,
         timer: timers::Timer<stm32::TIM3>,
-        transform: fn(Event) -> Event,
     }
 
     #[init(local = [bus: Option<UsbBusAllocator<usb::UsbBusType>> = None])]
@@ -99,11 +98,6 @@ mod app {
         });
         let io_expander = IoExpander::new(c.device.I2C2, pins, &mut rcc);
         let right = Right::new(io_expander);
-        let transform: fn(Event) -> Event = if right.is_ok {
-            |e| e
-        } else {
-            |e| e.transform(|i, j| (i, 9 - j))
-        };
 
         let matrix = cortex_m::interrupt::free(move |cs| {
             Matrix::new(
@@ -137,7 +131,6 @@ mod app {
                 debouncer_left: Debouncer::new([[false; 5]; 4], [[false; 5]; 4], 5),
                 debouncer_right: Debouncer::new([[false; 5]; 4], [[false; 5]; 4], 5),
                 timer,
-                transform,
             },
             init::Monotonics(),
         )
@@ -182,7 +175,7 @@ mod app {
     #[task(
         binds = TIM3,
         priority = 1,
-        local = [matrix, debouncer_left, debouncer_right, timer, transform, right],
+        local = [matrix, debouncer_left, debouncer_right, timer, right],
     )]
     fn tick(c: tick::Context) {
         c.local.timer.wait().ok();
