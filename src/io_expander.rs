@@ -6,31 +6,42 @@ use hal::rcc::Rcc;
 use hal::stm32;
 use stm32f0xx_hal as hal;
 
+/// Module to manipulate the MCP23017 IO Expander
+///
+/// Rows are on GPIOB: PB0 to PB3
+/// Cols are on GPIOA: PA0 to PA4
+
+/// Tuple with the pins used as I2C (SCL, SDA)
 pub type Pins = (PB10<Alternate<AF1>>, PB11<Alternate<AF1>>);
+/// I2C2 abstraction on (PB10, PB11)
 pub type I2c2 = I2c<stm32::I2C2, PB10<Alternate<AF1>>, PB11<Alternate<AF1>>>;
+
+/// IO Expander handler
 pub struct IoExpander {
+    /// I2C constroller (using the I2C2 chip on the STM32F072
     i2c: I2c2,
 }
-
-/**
- * Rows are on GPIOB: PB0 to PB3
- * Cols are on GPIOA: PA0 to PA4
- */
 
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(u8)]
+/// Register addresses on the MCP23017
 enum Register {
-    IODIR = 0x00, // i/o direction register
-    GPPU = 0x0C,  // GPIO pull-up resistor register
-    GPIOA = 0x12, // general purpose i/o port register (write modifies OLAT)
-    GPIOB = 0x13, // general purpose i/o port register (write modifies OLAT)
-    OLAT = 0x14,  // output latch register
+    /// I/O Direction Register
+    IODIR = 0x00,
+    /// GPIO pull-up Resistor Register
+    GPPU = 0x0C,
+    /// General Purpose I/O Port Register A
+    GPIOA = 0x12,
+    /// General Purpose I/O Port Register B
+    GPIOB = 0x13,
 }
 
+/// I2C address of te MCP23017
 const MCP_ADDR: u8 = 0x20;
 
 impl IoExpander {
+    /// Reset the MCP23017
     fn reset(&mut self) {
         // set pin direction
         // - input   : input  : 1

@@ -1,4 +1,5 @@
 #[rustfmt::skip]
+/// Default layout
 pub static LAYERS: keyberon::layout::Layers<10, 4, 1, ()> = keyberon::layout::layout! {
     {
         [ Q  W  E  R    T      Y       U      I  O  P ],

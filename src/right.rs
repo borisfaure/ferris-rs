@@ -1,6 +1,8 @@
 use crate::io_expander::IoExpander;
 
+/// Right side of the keyboard
 pub struct Right {
+    /// The IO Expander used to control the right side
     io_expander: IoExpander,
 }
 impl Right {

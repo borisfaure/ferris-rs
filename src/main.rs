@@ -1,5 +1,9 @@
 #![no_std]
 #![no_main]
+#![warn(missing_docs)]
+#![warn(clippy::missing_docs_in_private_items)]
+
+//! Firmware for the [Ferris keyboard](https://github.com/pierrechevalier83/ferris)
 
 // Some panic handler needs to be included. This one halts the processor on panic.
 use panic_halt as _;
@@ -19,13 +23,19 @@ use usb_device::bus::UsbBusAllocator;
 use usb_device::class::UsbClass as _;
 use usb_device::device::UsbDeviceState;
 
+/// The IO Expander on the right side
 mod io_expander;
+/// Layout of the keyboard
 mod layout;
+/// Right side of the keyboard
 mod right;
+
 use io_expander::IoExpander;
 use right::Right;
 
+/// USB Hid
 type UsbClass = keyberon::Class<'static, usb::UsbBusType, ()>;
+/// USB Device
 type UsbDevice = usb_device::device::UsbDevice<'static, usb::UsbBusType>;
 
 trait ResultExt<T> {
@@ -46,18 +56,26 @@ mod app {
 
     #[shared]
     struct Shared {
+        /// The USB device
         usb_dev: UsbDevice,
+        /// The HID class
         usb_class: UsbClass,
+        /// Layout of the keyboard
         #[lock_free]
         layout: Layout<10, 4, 1, ()>,
     }
 
     #[local]
     struct Local {
-        matrix: Matrix<Pin<Input<PullUp>>, Pin<Output<PushPull>>, 5, 4>, // left
+        /// Matrix of the left side
+        matrix: Matrix<Pin<Input<PullUp>>, Pin<Output<PushPull>>, 5, 4>,
+        /// Right side
         right: Right,
+        /// Debouncer for the left side
         debouncer_left: Debouncer<[[bool; 5]; 4]>,
+        /// Debouncer for the right side
         debouncer_right: Debouncer<[[bool; 5]; 4]>,
+        /// Timer when to scan the matrices
         timer: timers::Timer<stm32::TIM3>,
     }
 
