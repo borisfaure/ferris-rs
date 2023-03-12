@@ -8,7 +8,6 @@
 // Some panic handler needs to be included. This one halts the processor on panic.
 use panic_halt as _;
 
-use core::convert::Infallible;
 use hal::gpio::{Input, Output, Pin, PullUp, PushPull};
 use hal::prelude::*;
 use hal::usb;
@@ -37,18 +36,6 @@ use right::Right;
 type UsbClass = keyberon::Class<'static, usb::UsbBusType, ()>;
 /// USB Device
 type UsbDevice = usb_device::device::UsbDevice<'static, usb::UsbBusType>;
-
-trait ResultExt<T> {
-    fn get(self) -> T;
-}
-impl<T> ResultExt<T> for Result<T, Infallible> {
-    fn get(self) -> T {
-        match self {
-            Ok(v) => v,
-            Err(e) => match e {},
-        }
-    }
-}
 
 #[app(device = crate::hal::pac, peripherals = true, dispatchers = [CEC_CAN])]
 mod app {
@@ -135,7 +122,8 @@ mod app {
                     gpioa.pa2.into_push_pull_output(cs).downgrade(),
                 ],
             )
-        });
+        })
+        .unwrap();
 
         (
             Shared {
@@ -144,7 +132,7 @@ mod app {
                 layout: Layout::new(&crate::layout::LAYERS),
             },
             Local {
-                matrix: matrix.get(),
+                matrix,
                 right,
                 debouncer_left: Debouncer::new([[false; 5]; 4], [[false; 5]; 4], 5),
                 debouncer_right: Debouncer::new([[false; 5]; 4], [[false; 5]; 4], 5),
@@ -198,13 +186,13 @@ mod app {
     fn tick(c: tick::Context) {
         c.local.timer.wait().ok();
 
-        for event in c.local.debouncer_left.events(c.local.matrix.get().get()) {
+        for event in c.local.debouncer_left.events(c.local.matrix.get().unwrap()) {
             handle_event::spawn(event).unwrap();
         }
         for event in c
             .local
             .debouncer_right
-            .events(c.local.right.get().get())
+            .events(c.local.right.scan())
             .map(|e| e.transform(|i, j| (i, 5 + j)))
         {
             handle_event::spawn(event).unwrap();
