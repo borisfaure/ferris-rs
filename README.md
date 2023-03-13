@@ -1,7 +1,21 @@
+# Rust Firmware for the Ferris keyboard
+
+This firmware written in Rust is targetted for the
+[Ferris keyboard](https://github.com/pierrechevalier83/ferris) built with a
+STM32F072 MCU and a MCP23017 IO expander.
+
+It is based on the [Keyberon library](https://github.com/TeXitoi/keyberon).
+
+## Features
+
+- Single layer keymap
+- And nothing else for the moment
+
 ## Installing the needed tools
 
 Considering one has rust installed by [rustup.rs](https://rustup.rs), then
 one has to run the following commands:
+
 ```shell
 cargo install cargo-binutils
 rustup component add llvm-tools-preview
