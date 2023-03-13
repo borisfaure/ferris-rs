@@ -8,6 +8,7 @@ jobs:
       matrix:
         action:
           - fmt
+          - doc
           - check
           - clippy
           - build
