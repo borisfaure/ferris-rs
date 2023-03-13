@@ -20,7 +20,7 @@ use rtic::app;
 use stm32f0xx_hal as hal;
 use usb_device::bus::UsbBusAllocator;
 use usb_device::class::UsbClass as _;
-use usb_device::device::UsbDeviceState;
+use usb_device::device::{UsbDeviceBuilder, UsbDeviceState, UsbVidPid};
 
 /// The IO Expander on the right side
 mod io_expander;
@@ -31,6 +31,38 @@ mod right;
 
 use io_expander::IoExpander;
 use right::Right;
+
+// Ensure one of the models is set as feature
+#[cfg(not(any(
+    feature = "bling",
+    feature = "compact",
+    feature = "mini",
+    feature = "high"
+)))]
+compile_error!("Either feature \"bling\" or \"compact\" or \"mini\" or \"high\" must be enabled.");
+
+/// USB VID
+const VID: u16 = 0xc2ab;
+
+/// USB PID
+#[cfg(feature = "mini")]
+const PID: u16 = 0x0004;
+#[cfg(feature = "bling")]
+const PID: u16 = 0x0002;
+#[cfg(feature = "compact")]
+const PID: u16 = 0x0003;
+#[cfg(feature = "high")]
+const PID: u16 = 0x0005;
+
+/// USB Product
+#[cfg(feature = "mini")]
+const PRODUCT: &str = "Ferris 0.2 - Mini";
+#[cfg(feature = "bling")]
+const PRODUCT: &str = "Ferris 0.2 - Bling";
+#[cfg(feature = "compact")]
+const PRODUCT: &str = "Ferris 0.2 - Compact";
+#[cfg(feature = "high")]
+const PRODUCT: &str = "Ferris 0.2 - High";
 
 /// USB Hid
 type UsbClass = keyberon::Class<'static, usb::UsbBusType, ()>;
@@ -90,7 +122,11 @@ mod app {
         let usb_bus = c.local.bus.as_ref().unwrap();
 
         let usb_class = keyberon::new_class(usb_bus, ());
-        let usb_dev = keyberon::new_device(usb_bus);
+        let usb_dev = UsbDeviceBuilder::new(usb_bus, UsbVidPid(VID, PID))
+            .manufacturer("Cuddly Keyboards Ltd.")
+            .product(PRODUCT)
+            .serial_number(env!("CARGO_PKG_VERSION"))
+            .build();
 
         let mut timer = timers::Timer::tim3(c.device.TIM3, 1.khz(), &mut rcc);
         timer.listen(timers::Event::TimeOut);

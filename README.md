@@ -23,8 +23,16 @@ rustup component add llvm-tools-preview
 
 ## Compile & Flashing
 
+The name of the model to flash is set a cargo feature. The possible names are:
+
+- `bling`
+- `compact`
+- `mini`
+- `high`
+
+Example for the `mini` model:
+
 ```shell
-cargo build --release
-cargo objcopy --release -- -O binary ferris-firmware.bin
+cargo objcopy --release --no-default-features --features="mini" -- -O binary ferris-firmware.bin
 dfu-util -d 0483:DF11 -a 0 -s 0x08000000:leave -D ferris-firmware.bin
 ```

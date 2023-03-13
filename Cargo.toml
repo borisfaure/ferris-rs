@@ -4,6 +4,13 @@ version = "0.1.0"
 authors = ["Boris Faure <boris@fau.re>"]
 edition = "2021"
 
+[features]
+bling = []
+compact = []
+mini = []
+high = []
+default = ["mini"]
+
 [dependencies]
 cortex-m = "0.7"
 cortex-m-rt = { version = "0.7", features = ["device"] }
