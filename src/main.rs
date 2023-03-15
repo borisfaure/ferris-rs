@@ -26,6 +26,7 @@ use usb_device::device::{UsbDeviceBuilder, UsbDeviceState, UsbVidPid};
 mod io_expander;
 /// Layout of the keyboard
 mod layout;
+use layout::KBLayout;
 /// Right side of the keyboard
 mod right;
 
@@ -81,7 +82,7 @@ mod app {
         usb_class: UsbClass,
         /// Layout of the keyboard
         #[lock_free]
-        layout: Layout<10, 4, 1, ()>,
+        layout: KBLayout,
     }
 
     #[local]

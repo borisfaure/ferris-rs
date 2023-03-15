@@ -1,3 +1,8 @@
+use keyberon::layout::Layout;
+
+/// Keyboard Layout type to mask the number of layers
+pub type KBLayout = Layout<10, 4, 1, ()>;
+
 #[rustfmt::skip]
 /// Default layout
 pub static LAYERS: keyberon::layout::Layers<10, 4, 1, ()> = keyberon::layout::layout! {
