@@ -199,7 +199,7 @@ mod app {
         if c.shared.usb_dev.lock(|d| d.state()) != UsbDeviceState::Configured {
             return;
         }
-        if let CustomEvent::Release(()) = tick {
+        if let CustomEvent::Release(_Infallible) = tick {
             unsafe {
                 cortex_m::asm::bootload(0x1FFFC800 as _);
             }
