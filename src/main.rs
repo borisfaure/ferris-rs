@@ -24,14 +24,19 @@ use usb_device::device::{UsbDeviceBuilder, UsbDeviceState, UsbVidPid};
 
 /// The IO Expander on the right side
 mod io_expander;
-/// Layout of the keyboard
-mod layout;
-use layout::KBLayout;
 /// Right side of the keyboard
 mod right;
 
 use io_expander::IoExpander;
 use right::Right;
+
+#[cfg(not(any(feature = "keymap_borisfaure")))]
+compile_error!("Either feature \"keymap_borisfaure\" or \"\" must be enabled.");
+
+/// Layout of the keyboard
+mod keymap_borisfaure;
+#[cfg(feature = "keymap_borisfaure")]
+use keymap_borisfaure::{KBLayout, LAYERS};
 
 // Ensure one of the models is set as feature
 #[cfg(not(any(
@@ -166,7 +171,7 @@ mod app {
             Shared {
                 usb_dev,
                 usb_class,
-                layout: Layout::new(&crate::layout::LAYERS),
+                layout: Layout::new(&LAYERS),
             },
             Local {
                 matrix,

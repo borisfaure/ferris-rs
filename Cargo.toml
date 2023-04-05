@@ -9,7 +9,8 @@ bling = []
 compact = []
 mini = []
 high = []
-default = ["mini"]
+keymap_borisfaure = []
+default = ["mini", "keymap_borisfaure"]
 
 [dependencies]
 cortex-m = "0.7"
