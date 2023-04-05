@@ -6,9 +6,12 @@ use keyberon::layout::Layout;
 /// Keyboard Layout type to mask the number of layers
 pub type KBLayout = Layout<10, 4, 7, Infallible>;
 
+/// Timeout to consider a key as held
 const TIMEOUT: u16 = 200;
+/// Disable tap_hold_interval
 const TAP_HOLD_INTERVAL: u16 = 0;
 
+/// Helper to create a HoldTapAction
 macro_rules! ht {
     ($h:expr, $t:expr) => {
         Action::HoldTap(&HoldTapAction {
@@ -21,28 +24,48 @@ macro_rules! ht {
     };
 }
 
+/// Win when held, or W
 const W_WIN: Action = ht!(k(LGui), k(W));
+/// Win when held, or O
 const O_WIN: Action = ht!(k(RGui), k(O));
+/// Left Control when held, or A
 const A_CTL: Action = ht!(k(LCtrl), k(A));
+/// Right Control when held, or SemiColon
 const SC_C: Action = ht!(k(RCtrl), k(SColon));
+/// Left Shift when held, or Escape
 const ESC_S: Action = ht!(k(LShift), k(Escape));
+/// Right Shift when held, or Slash
 const SL_S: Action = ht!(k(RShift), k(Slash));
+/// Left Alt when held, or X
 const X_ALT: Action = ht!(k(LAlt), k(X));
+/// Left Alt when held, or .
 const DOT_A: Action = ht!(k(LAlt), k(X));
 
+/// Layer 1 (lower) when held, or Tab
 const TAB_L: Action = ht!(l(1), k(Tab));
+
+/// Layer 2 (raise) when held, or Enter
 const ENT_R: Action = ht!(l(2), k(Enter));
 
+/// Layer 3 (numbers/Fx) when held, or B
 const B_NUM: Action = ht!(l(3), k(B));
+/// Layer 3 (numbers/Fx) when held, or N
 const N_NUM: Action = ht!(l(3), k(N));
 
+/// Layer 4 (misc) when held, or T
 const T_MI: Action = ht!(l(4), k(T));
+/// Layer 4 (misc) when held, or Y
 const Y_MI: Action = ht!(l(4), k(Y));
+
+/// Layer 5 (tmux) when held, or F
 const F_TX: Action = ht!(l(5), k(F));
 
+/// Shift-Insert
 const S_INS: Action = m(&[LShift, Insert].as_slice());
 
+/// Change default layer to GAME
 const GAME: Action = d(6);
+/// Change default layer to BASE
 const BASE: Action = d(0);
 
 #[rustfmt::skip]
