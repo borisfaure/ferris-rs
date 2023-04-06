@@ -34,11 +34,13 @@ use right::Right;
 compile_error!("Either feature \"keymap_borisfaure\" or \"keymap_basic\" must be enabled.");
 
 /// Basic layout for the keyboard
+#[cfg(feature = "keymap_basic")]
 mod keymap_basic;
 #[cfg(feature = "keymap_basic")]
-use keymap_borisfaure::{KBLayout, LAYERS};
+use keymap_basic::{KBLayout, LAYERS};
 
 /// Keymap by Boris Faure
+#[cfg(feature = "keymap_borisfaure")]
 mod keymap_borisfaure;
 #[cfg(feature = "keymap_borisfaure")]
 use keymap_borisfaure::{KBLayout, LAYERS};
