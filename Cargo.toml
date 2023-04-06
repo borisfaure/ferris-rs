@@ -9,6 +9,7 @@ bling = []
 compact = []
 mini = []
 high = []
+keymap_basic = []
 keymap_borisfaure = []
 default = ["mini", "keymap_borisfaure"]
 

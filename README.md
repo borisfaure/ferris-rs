@@ -30,9 +30,14 @@ The name of the model to flash is set a cargo feature. The possible names are:
 - `mini`
 - `high`
 
-Example for the `mini` model:
+The possible keymaps are:
+
+- `keymap_borisfaure`
+- `keymap_basic`
+
+Example for the `mini` model and the keymap `keymap_basic`:
 
 ```shell
-cargo objcopy --release --no-default-features --features="mini" -- -O binary ferris-firmware.bin
+cargo objcopy --release --no-default-features --features="mini,keymap_basic" -- -O binary ferris-firmware.bin
 dfu-util -d 0483:DF11 -a 0 -s 0x08000000:leave -D ferris-firmware.bin
 ```

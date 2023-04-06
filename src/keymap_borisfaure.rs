@@ -69,7 +69,7 @@ const GAME: Action = d(6);
 const BASE: Action = d(0);
 
 #[rustfmt::skip]
-/// Default layout
+/// Layout
 pub static LAYERS: keyberon::layout::Layers<10, 4, 7, Infallible> = keyberon::layout::layout! {
     { /* 0: BASE */
 [ Q        {W_WIN}  E  R        {T_MI}      {Y_MI}   U        I  {O_WIN}  P      ],
