@@ -16,13 +16,12 @@ default = ["mini", "keymap_borisfaure"]
 cortex-m = "0.7"
 cortex-m-rt = { version = "0.7", features = ["device"] }
 stm32f0xx-hal = { version = "0.18", features = ["rt", "stm32f072", "stm32-usbd"] }
-#stm32f0xx-hal = { path = "../stm32f0xx-hal", features = ["rt", "stm32f072", "stm32-usbd"] }
-#stm32f0xx-hal = { git = "https://github.com/borisfaure/stm32f0xx-hal", branch = "master", features = ["rt", "stm32f072", "stm32-usbd"] }
 panic-halt = "0.2"
 usb-device= "0.2"
 cortex-m-rtic = "1.0"
 systick-monotonic = "1.0"
-keyberon = { git = "https://github.com/TeXitoi/keyberon", branch = "master" }
+keyberon = { git = "https://github.com/borisfaure/keyberon", branch = "master" }
+#keyberon = { path = "../keyberon" }
 embedded-hal = "0.2"
 nb = "1.0"
 
