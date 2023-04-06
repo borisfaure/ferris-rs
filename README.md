@@ -1,3 +1,4 @@
+![CI](https://github.com/borisfaure/ferris-rs/actions/workflows/ci.yml/badge.svg)
 # Rust Firmware for the Ferris keyboard
 
 This firmware written in Rust is targetted for the
