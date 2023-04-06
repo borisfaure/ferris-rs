@@ -26,12 +26,20 @@ FEATURES=(
     "mini"
     "high"
 )
+declare -A KEYMAPS
+KEYMAPS=(
+    "keymap_basic"
+    "keymap_borisfaure"
+)
 
 run_check() {
     cargo check
     for FEAT in "${FEATURES[@]}"
     do
-        cargo check --no-default-features --features "$FEAT"
+        for KEYMAP in "${KEYMAPS[@]}"
+        do
+            cargo check --no-default-features --features "$FEAT,$KEYMAP"
+        done
     done
 }
 
@@ -39,7 +47,10 @@ run_test() {
     cargo test
     for FEAT in "${FEATURES[@]}"
     do
-        cargo test --no-default-features --features "$FEAT"
+        for KEYMAP in "${KEYMAPS[@]}"
+        do
+            cargo test --no-default-features --features "$FEAT,$KEYMAP"
+        done
     done
 }
 
@@ -47,7 +58,10 @@ run_build() {
     cargo build
     for FEAT in "${FEATURES[@]}"
     do
-        cargo build --no-default-features --features "$FEAT"
+        for KEYMAP in "${KEYMAPS[@]}"
+        do
+            cargo build --no-default-features --features "$FEAT,$KEYMAP"
+        done
     done
 }
 
@@ -55,7 +69,10 @@ run_build_release() {
     cargo build --release
     for FEAT in "${FEATURES[@]}"
     do
-        cargo build --release --no-default-features --features "$FEAT"
+        for KEYMAP in "${KEYMAPS[@]}"
+        do
+            cargo build --release --no-default-features --features "$FEAT,$KEYMAP"
+        done
     done
 }
 
