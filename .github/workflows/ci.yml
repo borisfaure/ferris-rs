@@ -1,5 +1,9 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '15 1 * * 6'
 
 jobs:
   checks_and_builds:
