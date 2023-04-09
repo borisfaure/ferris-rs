@@ -69,10 +69,10 @@ const DL1: Action = d(1);
 /// Layout
 pub static LAYERS: keyberon::layout::Layers<10, 4, 8, Infallible> = keyberon::layout::layout! {
     { // 0: Base Layer
-[ Q     W     E     R    T      Y     U    I      O        P    ],
-[{LSA} {S5}  {D1}  {F3}  G      H    {J4} {K2}   {L6}     {LSSc}],
-[ Z    {LCX} {LAC}  V    B      N     M   {LACm} {LCDot}   /    ],
-[ n     n     n     0   BSpace {Sp7}  1    n      n        n    ],
+        [ Q     W     E     R    T      Y     U    I      O        P    ],
+        [{LSA} {S5}  {D1}  {F3}  G      H    {J4} {K2}   {L6}     {LSSc}],
+        [ Z    {LCX} {LAC}  V    B      N     M   {LACm} {LCDot}   /    ],
+        [ n     n     n     0   BSpace {Sp7}  1    n      n        n    ],
     } { // 1: Mouse TODO: mouse support
         [t t t t t    t n n n t],
         [t n n n t    t n n n n],
