@@ -38,17 +38,21 @@ const J4: Action = ht!(l(4), k(J));
 const K2: Action = ht!(l(2), k(K));
 /// HoldTap(Layer(6), KeyCode(L))
 const L6: Action = ht!(l(6), k(L));
+#[allow(non_upper_case_globals)]
 /// HoldTap(Layer(7), KeyCode(Space))
 const Sp7: Action = ht!(l(7), k(Space));
 
+#[allow(non_upper_case_globals)]
 /// HoldTap(KeyCode(LShift), KeyCode(SColon))
 const LSSc: Action = ht!(k(LShift), k(SColon));
 /// HoldTap(KeyCode(LCtrl), KeyCode(X))
 const LCX: Action = ht!(k(LCtrl), k(X));
 /// HoldTap(KeyCode(LAlt), KeyCode(C)),
 const LAC: Action = ht!(k(LAlt), k(C));
+#[allow(non_upper_case_globals)]
 /// HoldTap(KeyCode(LAlt), KeyCode(Comma))
 const LACm: Action = ht!(k(LAlt), k(Comma));
+#[allow(non_upper_case_globals)]
 /// HoldTap(KeyCode(LCtrl), KeyCode(Dot))
 const LCDot: Action = ht!(k(LCtrl), k(Dot));
 /// MultipleKeyCodes([LCtrl, LAlt])
@@ -57,6 +61,7 @@ const CA: Action = m(&[LCtrl, LAlt].as_slice());
 const CAS: Action = m(&[LCtrl, LAlt, LShift].as_slice());
 /// HoldTap(KeyCode(RCtrl), KeyCode(Dot))
 const RCD: Action = ht!(k(RCtrl), k(Dot));
+#[allow(non_upper_case_globals)]
 /// HoldTap(KeyCode(RAlt), KeyCode(Comma))
 const RACm: Action = ht!(k(RAlt), k(Comma));
 
