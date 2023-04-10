@@ -4,6 +4,20 @@ set -e
 set -x
 set -u
 
+declare -A FEATURES
+FEATURES=(
+    "bling"
+    "compact"
+    "mini"
+    "high"
+)
+declare -A KEYMAPS
+KEYMAPS=(
+    "keymap_basic"
+    "keymap_borisfaure"
+)
+
+
 run_doc() {
     rustup component add rust-docs
     cargo doc
@@ -17,20 +31,14 @@ run_fmt() {
 run_clippy() {
     rustup component add clippy-preview
     cargo clippy -- -D warnings
+    for FEAT in "${FEATURES[@]}"
+    do
+        for KEYMAP in "${KEYMAPS[@]}"
+        do
+            cargo clippy --no-default-features --features "$FEAT,$KEYMAP" -- -D warnings
+        done
+    done
 }
-
-declare -A FEATURES
-FEATURES=(
-    "bling"
-    "compact"
-    "mini"
-    "high"
-)
-declare -A KEYMAPS
-KEYMAPS=(
-    "keymap_basic"
-    "keymap_borisfaure"
-)
 
 run_check() {
     cargo check
