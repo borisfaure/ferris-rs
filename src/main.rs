@@ -57,24 +57,30 @@ compile_error!("Either feature \"bling\" or \"compact\" or \"mini\" or \"high\" 
 /// USB VID
 const VID: u16 = 0xc2ab;
 
-/// USB PID
 #[cfg(feature = "mini")]
+/// USB PID
 const PID: u16 = 0x0004;
 #[cfg(feature = "bling")]
+/// USB PID
 const PID: u16 = 0x0002;
 #[cfg(feature = "compact")]
+/// USB PID
 const PID: u16 = 0x0003;
 #[cfg(feature = "high")]
+/// USB PID
 const PID: u16 = 0x0005;
 
-/// USB Product
 #[cfg(feature = "mini")]
+/// USB Product
 const PRODUCT: &str = "Ferris 0.2 - Mini";
 #[cfg(feature = "bling")]
+/// USB Product
 const PRODUCT: &str = "Ferris 0.2 - Bling";
 #[cfg(feature = "compact")]
+/// USB Product
 const PRODUCT: &str = "Ferris 0.2 - Compact";
 #[cfg(feature = "high")]
+/// USB Product
 const PRODUCT: &str = "Ferris 0.2 - High";
 
 /// USB Hid
