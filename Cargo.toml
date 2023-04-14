@@ -11,6 +11,7 @@ mini = []
 high = []
 keymap_basic = []
 keymap_borisfaure = []
+keymap_pierrec83 = []
 default = ["mini", "keymap_borisfaure"]
 
 [dependencies]

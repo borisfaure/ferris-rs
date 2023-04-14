@@ -30,8 +30,12 @@ mod right;
 use io_expander::IoExpander;
 use right::Right;
 
-#[cfg(not(any(feature = "keymap_borisfaure", feature = "keymap_basic")))]
-compile_error!("Either feature \"keymap_borisfaure\" or \"keymap_basic\" must be enabled.");
+#[cfg(not(any(
+    feature = "keymap_basic",
+    feature = "keymap_borisfaure",
+    feature = "keymap_pierrec83"
+)))]
+compile_error!("Either feature \"keymap_basic\" or \"keymap_borisfaure\" or \"keymap_pierrec83\" must be enabled.");
 
 /// Basic layout for the keyboard
 #[cfg(feature = "keymap_basic")]
@@ -44,6 +48,12 @@ use keymap_basic::{KBLayout, LAYERS};
 mod keymap_borisfaure;
 #[cfg(feature = "keymap_borisfaure")]
 use keymap_borisfaure::{KBLayout, LAYERS};
+
+/// Keymap by @pierrec83
+#[cfg(feature = "keymap_pierrec83")]
+mod keymap_pierrec83;
+#[cfg(feature = "keymap_pierrec83")]
+use keymap_pierrec83::{KBLayout, LAYERS};
 
 // Ensure one of the models is set as feature
 #[cfg(not(any(

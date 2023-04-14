@@ -33,8 +33,9 @@ The name of the model to flash is set a cargo feature. The possible names are:
 
 The possible keymaps are:
 
-- `keymap_borisfaure`
 - `keymap_basic`
+- `keymap_borisfaure`
+- `keymap_pierrec83`
 
 Example for the `mini` model and the keymap `keymap_basic`:
 
