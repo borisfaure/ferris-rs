@@ -1,4 +1,5 @@
 ![CI](https://github.com/borisfaure/ferris-rs/actions/workflows/ci.yml/badge.svg)
+
 # Rust Firmware for the Ferris keyboard
 
 This firmware written in Rust is targetted for the
@@ -9,8 +10,18 @@ It is based on the [Keyberon library](https://github.com/TeXitoi/keyberon).
 
 ## Features
 
-- Single layer keymap
-- And nothing else for the moment
+- Multi layers keymaps
+- Multiple keymaps
+- Different Ferris models
+- Hold Tap actions
+
+## What's missing
+
+- No support for controlling the mouse
+- No RGB (support is in keyberon but not implemented here)
+- Sequences
+- One Shot Actions
+- ...
 
 ## Installing the needed tools
 
