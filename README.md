@@ -48,7 +48,12 @@ The possible keymaps are:
 - `keymap_borisfaure`
 - `keymap_pierrec83`
 
-Example for the `mini` model and the keymap `keymap_basic`:
+Some of them were converted with help from the tool
+[qmk-layout-to-keyberon](https://github.com/borisfaure/qmk-layout-to-keyberon).
+
+
+In order to generate and install the firmware for the `mini` model and the
+keymap `keymap_basic`:
 
 ```shell
 cargo objcopy --release --no-default-features --features="mini,keymap_basic" -- -O binary ferris-firmware.bin
