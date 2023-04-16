@@ -4,7 +4,7 @@ use keyberon::key_code::KeyCode::*;
 use keyberon::layout::Layout;
 
 /// Keyboard Layout type to mask the number of layers
-pub type KBLayout = Layout<10, 4, 7, Infallible>;
+pub type KBLayout = Layout<10, 4, 8, Infallible>;
 
 /// Timeout to consider a key as held
 const TIMEOUT: u16 = 200;
@@ -63,6 +63,24 @@ const F_TX: Action = ht!(l(5), k(F));
 /// Shift-Insert
 const S_INS: Action = m(&[LShift, Insert].as_slice());
 
+/// A shortcut to create a `Action::MultipleActions`, useful to
+/// create compact layout.
+const fn ma<T, K>(actions: &'static &'static [Action<T, K>]) -> Action<T, K> {
+    Action::MultipleActions(actions)
+}
+
+/// Helper to create keys shifted
+macro_rules! s {
+    ($k:ident) => {
+        m(&[LShift, $k].as_slice())
+    };
+}
+
+/// Caps Mode
+const CAPS: Action = ma(&[k(CapsLock), d(7)].as_slice());
+/// Unset Caps Mode
+const UNCAPS: Action = ma(&[k(CapsLock), d(0)].as_slice());
+
 /// Change default layer to GAME
 const GAME: Action = d(6);
 /// Change default layer to BASE
@@ -70,7 +88,7 @@ const BASE: Action = d(0);
 
 #[rustfmt::skip]
 /// Layout
-pub static LAYERS: keyberon::layout::Layers<10, 4, 7, Infallible> = keyberon::layout::layout! {
+pub static LAYERS: keyberon::layout::Layers<10, 4, 8, Infallible> = keyberon::layout::layout! {
     { /* 0: BASE */
 [ Q        {W_WIN}  E  R        {T_MI}      {Y_MI}   U        I  {O_WIN}  P      ],
 [ {A_CTL}  S        D  {F_TX}   G           H        J        K  L        {SC_C} ],
@@ -82,9 +100,9 @@ pub static LAYERS: keyberon::layout::Layers<10, 4, 7, Infallible> = keyberon::la
         [ @  &  %    '[' ']'    n       n       Home     '\''   '"'  ],
         [ n  n  n     n  RAlt   Escape  Delete  n        n      n    ],
     } { /* 2: RAISE TODO: sequences */
-        [ {BASE}  n    E  E         E           Z       U      I   O      PScreen ],
-        [ A       '_'  +  &         |           Left    Down   Up  Right  PgUp    ],
-        [ E       O    C  CapsLock  NumLock     N       M      ,   .      PgDown  ],
+        [ {BASE}  n    E   E        E           Z       U      I   O      PScreen ],
+        [ A       '_'  +   &        |           Left    Down   Up  Right  PgUp    ],
+        [ E       O    C  {CAPS}    NumLock     N       M      ,   .      PgDown  ],
         [ n       n    n  Delete    RAlt        BSpace  Enter  n   n      n       ],
     } { /* 3: NUMBERS Fx */
         [ .  4  5  6  =        /  F1   F2   F3   F4  ],
@@ -106,5 +124,10 @@ pub static LAYERS: keyberon::layout::Layers<10, 4, 7, Infallible> = keyberon::la
         [ A  S  D   F        G      H       J       K   L       {SC_C} ],
         [ Z  X  C   V        B      N       M       ,  {DOT_A}  {SL_S} ],
         [ n  n  n  {TAB_L}  Space  BSpace  {ENT_R}  n   n        n     ],
+    } { /* 7: Caps */
+[ {s!(Q)}  {s!(W)}  {s!(E)}  {s!(R)}  {s!(T)}         {s!(Y)}   {s!(U)}  {s!(I)}  {s!(O)}   {s!(P)} ],
+[ {A_CTL}  {s!(S)}  {s!(D)}  {s!(F)}  {s!(G)}         {s!(H)}   {s!(J)}  {s!(K)}  {s!(L)}   {SC_C}  ],
+[ {UNCAPS} {s!(X)}  {s!(C)}  {s!(V)}  {s!(B)}         {s!(N)}   {s!(M)}   ,        .         /      ],
+[  n        n        n        '_'      Space           BSpace   {ENT_R}   n        n         n      ],
     }
 };
