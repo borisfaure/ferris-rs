@@ -6,6 +6,13 @@ use keyberon::layout::Layout;
 /// Keyboard Layout type to mask the number of layers
 pub type KBLayout = Layout<10, 4, 8, Infallible>;
 
+/// Helper to create keys shifted
+macro_rules! s {
+    ($k:ident) => {
+        m(&[LShift, $k].as_slice())
+    };
+}
+
 /// Timeout to consider a key as held
 const TIMEOUT: u16 = 200;
 /// Disable tap_hold_interval
@@ -25,40 +32,42 @@ macro_rules! ht {
 }
 
 /// Win when held, or W
-const W_WIN: Action = ht!(k(LGui), k(W));
+const HT_W_W: Action = ht!(k(LGui), k(W));
 /// Win when held, or O
-const O_WIN: Action = ht!(k(RGui), k(O));
+const HT_W_O: Action = ht!(k(RGui), k(O));
 /// Left Control when held, or A
-const A_CTL: Action = ht!(k(LCtrl), k(A));
+const HT_C_A: Action = ht!(k(LCtrl), k(A));
+/// Left Control when held, or Shift-A
+const HT_C_SA: Action = ht!(k(LCtrl), s!(A));
 /// Right Control when held, or SemiColon
-const SC_C: Action = ht!(k(RCtrl), k(SColon));
+const HT_C_SC: Action = ht!(k(RCtrl), k(SColon));
 /// Left Shift when held, or Escape
-const ESC_S: Action = ht!(k(LShift), k(Escape));
+const HT_S_ESC: Action = ht!(k(LShift), k(Escape));
 /// Right Shift when held, or Slash
-const SL_S: Action = ht!(k(RShift), k(Slash));
+const HT_S_SL: Action = ht!(k(RShift), k(Slash));
 /// Left Alt when held, or X
-const X_ALT: Action = ht!(k(LAlt), k(X));
+const HT_A_X: Action = ht!(k(LAlt), k(X));
 /// Left Alt when held, or .
-const DOT_A: Action = ht!(k(LAlt), k(X));
+const HT_A_DOT: Action = ht!(k(LAlt), k(Dot));
 
 /// Layer 1 (lower) when held, or Tab
-const TAB_L: Action = ht!(l(1), k(Tab));
+const HT_1_TAB: Action = ht!(l(1), k(Tab));
 
 /// Layer 2 (raise) when held, or Enter
-const ENT_R: Action = ht!(l(2), k(Enter));
+const HT_2_ENT: Action = ht!(l(2), k(Enter));
 
 /// Layer 3 (numbers/Fx) when held, or B
-const B_NUM: Action = ht!(l(3), k(B));
+const HT_3_B: Action = ht!(l(3), k(B));
 /// Layer 3 (numbers/Fx) when held, or N
-const N_NUM: Action = ht!(l(3), k(N));
+const HT_3_N: Action = ht!(l(3), k(N));
 
 /// Layer 4 (misc) when held, or T
-const T_MI: Action = ht!(l(4), k(T));
+const HT_4_T: Action = ht!(l(4), k(T));
 /// Layer 4 (misc) when held, or Y
-const Y_MI: Action = ht!(l(4), k(Y));
+const HT_4_Y: Action = ht!(l(4), k(Y));
 
 /// Layer 5 (tmux) when held, or F
-const F_TX: Action = ht!(l(5), k(F));
+const HT_5_F: Action = ht!(l(5), k(F));
 
 /// Shift-Insert
 const S_INS: Action = m(&[LShift, Insert].as_slice());
@@ -67,13 +76,6 @@ const S_INS: Action = m(&[LShift, Insert].as_slice());
 /// create compact layout.
 const fn ma<T, K>(actions: &'static &'static [Action<T, K>]) -> Action<T, K> {
     Action::MultipleActions(actions)
-}
-
-/// Helper to create keys shifted
-macro_rules! s {
-    ($k:ident) => {
-        m(&[LShift, $k].as_slice())
-    };
 }
 
 /// Caps Mode
@@ -90,10 +92,10 @@ const BASE: Action = d(0);
 /// Layout
 pub static LAYERS: keyberon::layout::Layers<10, 4, 8, Infallible> = keyberon::layout::layout! {
     { /* 0: BASE */
-[ Q        {W_WIN}  E  R        {T_MI}      {Y_MI}   U        I  {O_WIN}  P      ],
-[ {A_CTL}  S        D  {F_TX}   G           H        J        K  L        {SC_C} ],
-[ {ESC_S}  {X_ALT}  C  V        {B_NUM}     {N_NUM}  M        ,  {DOT_A}  {SL_S} ],
-[ n        n        n  {TAB_L}  Space       BSpace   {ENT_R}  n  n        n      ],
+[  Q         {HT_W_W}  E   R         {HT_4_T}    {HT_4_Y}   U          I  {HT_W_O}     P        ],
+[ {HT_C_A}    S        D  {HT_5_F}    G           H         J          K   L          {HT_C_SC} ],
+[ {HT_S_ESC} {HT_A_X}  C   V         {HT_3_B}    {HT_3_N}   M          ,  {HT_A_DOT}  {HT_S_SL} ],
+[  n          n        n  {HT_1_TAB}  Space       BSpace   {HT_2_ENT}  n   n           n        ],
     } { /* 1: LOWER */
         [ !  #  $    '(' ')'    ^       &       {S_INS}  *      ~    ],
         [ =  -  '`'  '{' '}'    Left    PgDown  PgUp     Right  '\\' ],
@@ -120,14 +122,14 @@ pub static LAYERS: keyberon::layout::Layers<10, 4, 8, Infallible> = keyberon::la
         [ Z  X  C  V    B      N       M      ,  .  / ],
         [ n  n  n  Tab  Space  BSpace  Enter  n  n  n ],
     } { /* 6: Gaming */
-        [ Q  W  E   R        T      Y       U       I  {O_WIN}   P     ],
-        [ A  S  D   F        G      H       J       K   L       {SC_C} ],
-        [ Z  X  C   V        B      N       M       ,  {DOT_A}  {SL_S} ],
-        [ n  n  n  {TAB_L}  Space  BSpace  {ENT_R}  n   n        n     ],
+        [ Q  W  E   R           T      Y       U          I  {HT_W_O}     P       ],
+        [ A  S  D   F           G      H       J          K   L         {HT_C_SC} ],
+        [ Z  X  C   V           B      N       M          ,  {HT_A_DOT} {HT_S_SL} ],
+        [ n  n  n  {HT_1_TAB}  Space  BSpace  {HT_2_ENT}  n   n          n        ],
     } { /* 7: Caps */
-[ {s!(Q)}  {s!(W)}  {s!(E)}  {s!(R)}  {s!(T)}         {s!(Y)}   {s!(U)}  {s!(I)}  {s!(O)}   {s!(P)} ],
-[ {A_CTL}  {s!(S)}  {s!(D)}  {s!(F)}  {s!(G)}         {s!(H)}   {s!(J)}  {s!(K)}  {s!(L)}   {SC_C}  ],
-[ {UNCAPS} {s!(X)}  {s!(C)}  {s!(V)}  {s!(B)}         {s!(N)}   {s!(M)}   ,        .         /      ],
-[  n        n        n        '_'      Space           BSpace   {ENT_R}   n        n         n      ],
+[ {s!(Q)}   {s!(W)}  {s!(E)}  {s!(R)}  {s!(T)}         {s!(Y)}   {s!(U)}     {s!(I)}  {s!(O)}   {s!(P)}   ],
+[ {HT_C_SA} {s!(S)}  {s!(D)}  {s!(F)}  {s!(G)}         {s!(H)}   {s!(J)}     {s!(K)}  {s!(L)}   {HT_C_SC} ],
+[ {UNCAPS}  {s!(X)}  {s!(C)}  {s!(V)}  {s!(B)}         {s!(N)}   {s!(M)}      ,        .         /        ],
+[  n         n        n        '_'      Space           BSpace   {HT_2_ENT}   n        n         n        ],
     }
 };
