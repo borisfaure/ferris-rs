@@ -8,6 +8,8 @@ STM32F072 MCU and a MCP23017 IO expander.
 
 It is based on the [Keyberon library](https://github.com/TeXitoi/keyberon).
 
+![Ferris Bling Keyboard](https://fau.re/img/ferris-bling.jpg)
+
 ## Features
 
 - Multi layers keymaps
