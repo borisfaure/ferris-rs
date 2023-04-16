@@ -102,9 +102,9 @@ pub static LAYERS: keyberon::layout::Layers<10, 4, 7, Infallible> = keyberon::la
         [ Z  X  C  V    B      N       M      ,  .  / ],
         [ n  n  n  Tab  Space  BSpace  Enter  n  n  n ],
     } { /* 6: Gaming */
-        [ Q  W  E  R        T      Y       U        I  {O_WIN}  P ],
-        [ A  S  D  F        G      H       J        K  L        {SC_C} ],
-        [ Z  X  C  V        B      N       M        ,  {DOT_A}  {SL_S} ],
-        [ n  n  n  {TAB_L}  Space  BSpace  {ENT_R}  n  n        n ],
+        [ Q  W  E   R        T      Y       U       I  {O_WIN}   P     ],
+        [ A  S  D   F        G      H       J       K   L       {SC_C} ],
+        [ Z  X  C   V        B      N       M       ,  {DOT_A}  {SL_S} ],
+        [ n  n  n  {TAB_L}  Space  BSpace  {ENT_R}  n   n        n     ],
     }
 };
