@@ -22,7 +22,7 @@ panic-halt = "0.2"
 usb-device= "0.2"
 cortex-m-rtic = "1.0"
 systick-monotonic = "1.0"
-keyberon = { git = "https://github.com/borisfaure/keyberon", branch = "main" }
+keyberon = { git = "https://github.com/borisfaure/keyberon", branch = "sequences" }
 #keyberon = { path = "../keyberon" }
 embedded-hal = "0.2"
 nb = "1.0"
