@@ -19,7 +19,7 @@ cortex-m = "0.7"
 cortex-m-rt = { version = "0.7", features = ["device"] }
 stm32f0xx-hal = { version = "0.18", features = ["rt", "stm32f072", "stm32-usbd"] }
 panic-halt = "0.2"
-usb-device= "0.2"
+usb-device= "0.3"
 cortex-m-rtic = "1.0"
 systick-monotonic = "1.0"
 keyberon = { git = "https://github.com/borisfaure/keyberon", branch = "main" }
